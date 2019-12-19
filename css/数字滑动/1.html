@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>number</title>
+    <style>
+        #wrapper {
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            top: 0;
+            transition: top 3s;
+        }
+
+        #list span {
+            line-height: 20px;
+        }
+
+        .scroll-top {
+            top: -220px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="wrapper">
+        <div id="list" class="list"></div>
+    </div>
+    <script>
+        var listEle = document.getElementById('list')
+        let html = ''
+        //数字0-11动画
+        for (let i = 0; i < 12; i++) {
+            html += `<span>${i}</span>`
+        }
+        listEle.innerHTML = html
+        setTimeout(() => {
+            listEle.className += ' scroll-top'
+        }, 100)
+
+    </script>
+</body>
+
+</html>
