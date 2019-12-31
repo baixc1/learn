@@ -156,7 +156,6 @@ p                   //{}
  */
 var p = new Proxy({}, {
     defineProperty(target, prop, descriptor) {
-        console.log(descriptor);
         return Reflect.defineProperty(target, prop, descriptor);
     }
 });
@@ -166,3 +165,100 @@ Object.defineProperty(p, 'name', {          //{ value: 'proxy' }
     type: 'custom'          //忽略
 });
 p                           //{name: "proxy"}
+
+
+
+//返回一个可取消的 Proxy 实例
+var { proxy: p, revoke } = Proxy.revocable({}, {})
+p.a = 1
+p.a                 //1
+// revoke()
+p.a             //TypeError
+
+
+
+
+//数据响应式
+var watch = (obj, event1, event2) => {
+    return new Proxy(obj, {
+        //手机依赖
+        get(target, property) {
+            event1(target, property)
+            return Reflect.get(...arguments)
+        },
+        //更新
+        set(target, property, value) {
+            event2(target, property, value)
+            return Reflect.set(...arguments)
+        }
+    })
+}
+
+var p = watch({ a: 1 },
+    (target, property) => {
+        console.log(`get: ${property}=${target[property]}`)
+    },
+    (target, property, value) => {
+        console.log(`set: ${property}，${target[property]}->${value}`)
+    })
+
+p.a = 2
+p.a
+
+//https://www.jianshu.com/p/ce16fc34fc33
+
+
+//数据校验
+function validator(target, validator) {
+    return new Proxy(target, {
+        set(target, key, value, receiver) {
+            if (target.hasOwnProperty(key)) {
+                if (validator[key](value)) {
+                    return Reflect.set(target, key, value, receiver)
+                } else {
+                    throw Error(`不能设置${key}到${value}`)
+                }
+            } else {
+                throw Error(`${key}不存在`)
+            }
+        }
+    })
+}
+
+class Person {
+    constructor(name, age) {
+        this.name = name
+        this.age = age
+        return validator(this, {
+            name(val) {
+                return typeof val === 'string'
+            },
+            age(val) {
+                return typeof val === 'number' && val > 18
+            }
+        })
+    }
+}
+
+var person = new Person('knyel', 30)
+person
+person.name = 'lk'
+// person.age = 12     //报错  
+
+//不能直接代理一些需要 this 的对象
+//原生对象的内部属性
+var target = new Date('2020-01-01')
+var handler = {
+    get(target, prop) {
+        if (prop == 'getDate') {
+            return target.getDate.bind(target)
+        } else {
+            return Reflect.get(target, prop)
+        }
+    }
+}
+
+var proxy = new Proxy(target, handler)
+proxy.getDate()                 //1
+// proxy.getMonth()                //报错
+
