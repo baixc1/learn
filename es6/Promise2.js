@@ -180,23 +180,3 @@ var thenable = {
 
 Promise.reject(thenable)
     .catch(data => console.log(data == thenable))   //true
-
-//应用三：Generator 函数与 Promise 的结合
-function getData(data) {
-    return new Promise(resolve => resolve(data))
-}
-
-var g = function* () {
-    let d1 = yield getData(1)
-    let d2 = d1 + (yield getData(2))
-    let d3 = d2 + (yield getData(3))
-}
-
-var it = g()
-var data = go(it.next())
-console.log(data)
-
-function go(res) {
-    if (res.done) return res.value
-    return res.value.then(v => go(it.next(v)))
-}
